@@ -40,6 +40,8 @@ use Sabre\VObject;
 require_once DOKU_PLUGIN . 'syntax.php';
 require_once __DIR__ . '/vendor/autoload.php';
 
+use dokuwiki\Cache\Cache; 
+
 class syntax_plugin_icalevents extends syntax_plugin_icalevents_base {
     function __construct() {
         // Unpredictable (not in a crypto sense) nonce to recognize our own
@@ -135,6 +137,8 @@ class syntax_plugin_icalevents extends syntax_plugin_icalevents_base {
     }
 
     function render($mode, Doku_Renderer $renderer, $data) {
+        global $ID;
+
         list(
             $source,
             $fromString,
@@ -147,6 +151,10 @@ class syntax_plugin_icalevents extends syntax_plugin_icalevents_base {
             $dformat,
             $tformat
           ) = $data;
+
+        if($mode == 'metadata') {
+            return;
+        }
 
         try {
             $from = new DateTime($fromString);
@@ -163,13 +171,40 @@ class syntax_plugin_icalevents extends syntax_plugin_icalevents_base {
             return false;
         }
 
+        $cacheID = md5($source);
+
+        $file = new Cache($cacheID, '.ical');
+
+        file_put_contents($file->cache, $content);
+
+        // set URL of ical in meta data for cache handler
+        $existing_events = p_get_metadata($ID,'icalevents',METADATA_DONT_RENDER);
+
+        if($existing_events == "") {
+            $existing_events = [];
+        }
+
+        $urlExists = false;
+        foreach ($existing_events as $element) {
+            if (isset($element['url']) && $element['url'] === $source) {
+                $urlExists = true;
+                break;
+            }
+        }
+
+        if(!$urlExists) {
+            $existing_events[] = ['url' => $source, 'timestamp' => @filemtime($file->cache)];
+        }
+
+        p_set_metadata($ID,['icalevents' => $existing_events],METADATA_DONT_RENDER,True);
+
         // SECURITY
         // Disable caching for rendered local (media) files because
         // a user without read permission for the local file could read
         // the cached document.
         // Also disable caching if the rendered result depends on the
         // current time, i.e., if the time range to display is relative.
-        if (static::isLocalFile($source) || $hasRelativeRange) {
+        if (static::isLocalFile($source)) {
             $renderer->info['cache'] = false;
         }
 

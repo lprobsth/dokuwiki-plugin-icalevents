@@ -18,3 +18,4 @@ $conf['template:list'] = '====== {date}: {summary} ======
 {description}';
 $conf['template:table'] = '| **{date}**  | {summary_link}  | {location_link}  | (({description}))  |';
 $conf['template:table_without_description'] = '| **{date}**  | {summary_link}  | {location_link}  |';
+$conf['update_freq'] = 300;

@@ -20,3 +20,4 @@ $meta['template:table_without_description'] = array('');
 $meta['template:custom1'] = array('');
 $meta['template:custom2'] = array('');
 $meta['template:custom3'] = array('');
+$meta['update_freq'] = array('numeric','_min',5);
