@@ -53,9 +53,13 @@ class action_plugin_icalevents extends DokuWiki_Action_Plugin {
      * @param array      $params The parameters for the event
      */
     function cache_callback_icalevents(Doku_Event &$event, $param) {
-        global $INFO;
+        global $ID;
 
-        $icalevents_meta =& $INFO['meta']['icalevents'];
+        if($event->data->mode !== 'xhtml') {
+            return;
+        }
+
+        $icalevents_meta = p_get_metadata($ID,'icalevents',METADATA_DONT_RENDER);
         // if no metadata is set the icalevents is not used
         if(!isset($icalevents_meta)) {
             return;
@@ -84,7 +88,9 @@ class action_plugin_icalevents extends DokuWiki_Action_Plugin {
 
         $icalevents_meta = p_get_metadata($ID,'icalevents',METADATA_DONT_RENDER);
         foreach ($icalevents_meta as $key => &$element) {
-            if(time() - $this->getConf('update_freq') >= $element['timestamp']) {
+            $now = time();
+            $timestamp = $element['timestamp'];
+            if($now - $this->getConf('update_freq') >= $timestamp) {
                 $this->updateCalendarCache($element['url']);
 
                 unset($icalevents_meta[$key]);

@@ -185,8 +185,13 @@ class syntax_plugin_icalevents extends syntax_plugin_icalevents_base {
         }
 
         $urlExists = false;
-        foreach ($existing_events as $element) {
+        foreach ($existing_events as $key => $element) {
             if (isset($element['url']) && $element['url'] === $source) {
+                unset($existing_events[$key]);
+                $existing_events[$key] = $element;
+
+                $existing_events[$key]['timestamp'] = @filemtime($file->cache);
+
                 $urlExists = true;
                 break;
             }
